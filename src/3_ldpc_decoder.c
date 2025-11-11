@@ -23,6 +23,7 @@ LDPC_Decoder* LDPC_Decoder_Create(LDPC_CodeRate rate)
     }
     
     dec->M = dec->N - dec->K;
+    dec->K = LDPC_K_RATE_2_3;
     
     int num_edges = dec->N * 3;
     dec->edge_values = calloc(num_edges, sizeof(float));
