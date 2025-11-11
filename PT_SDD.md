@@ -1,6 +1,6 @@
-# 미사일 텔레메트리 시스템 - 완전 설명서 (최종 버전)
+# 미사일 텔레메트리 시스템 - 설명서
 
-## 📋 목차
+##  목차
 1. [프로젝트 개요](#프로젝트-개요)
 2. [변수 프리픽스 시스템](#변수-프리픽스-시스템)
 3. [자료 구조 (Struct) 완전 설명](#자료-구조-struct-완전-설명)
@@ -12,16 +12,16 @@
 
 # 프로젝트 개요
 
-## 🎯 미사일 텔레메트리 시스템이란?
+##  미사일 텔레메트리 시스템이란?
 
 **목적**: 비행 중인 미사일에서 센서 데이터를 수집 → 처리 → 암호화 → RF 신호로 변조 → 송신
 
 **주요 기능**:
-- ✅ IMU, 압력, 온도 센서 데이터 수집
-- ✅ LDPC 오류 정정 코드 적용
-- ✅ SOQPSK 변조를 이용한 RF 신호 생성
-- ✅ 발사 감지 및 텔레메트리 자동 전송
-- ✅ IRIG 106-23 표준 준수
+-  IMU, 압력, 온도 센서 데이터 수집
+-  LDPC 오류 정정 코드 적용
+-  SOQPSK 변조를 이용한 RF 신호 생성
+-  발사 감지 및 텔레메트리 자동 전송
+-  IRIG 106-23 표준 준수
 
 **표준**: IRIG 106-23 (공군 계측 표준)
 
@@ -29,9 +29,9 @@
 
 # 변수 프리픽스 시스템
 
-## 🎯 3가지 프리픽스로 변수 분류
+##  3가지 프리픽스로 변수 분류
 
-### **PT_ (Project Tuning) - 자유롭게 변경 가능 ✅**
+### **PT_ (Project Tuning) - 자유롭게 변경 가능 **
 
 ```
 의미: 프로젝트별 튜닝 파라미터
@@ -57,7 +57,7 @@ PT_PLL_BANDWIDTH_SCALE = 0.01f         (위상 추적)
 
 ---
 
-### **IRIG_ (IRIG 106 표준) - 신중하게 변경 ⚠️**
+### **IRIG_ (IRIG 106 표준) - 신중하게 변경 **
 
 ```
 의미: IRIG 106 표준에서 권장하는 파라미터
@@ -72,13 +72,13 @@ IRIG_LDPC_CODE_RATE = LDPC_RATE_2_3    (부호율)
 ```
 
 **주의사항**:
-- ⚠️ 변경 시 지상국 수신기도 동일하게 변경 필수!
-- ⚠️ 채널 대역폭 제약 고려
-- ⚠️ 통신 거리에 영향
+-  변경 시 지상국 수신기도 동일하게 변경 필수!
+-  채널 대역폭 제약 고려
+-  통신 거리에 영향
 
 ---
 
-### **IRIGFIX_ (IRIG 106 고정) - 절대 변경 금지 ❌**
+### **IRIGFIX_ (IRIG 106 고정) - 절대 변경 금지 **
 
 ```
 의미: IRIG 106에서 고정으로 정한 값
@@ -93,17 +93,17 @@ IRIGFIX_CPM_B = 1.25                   (CPM 매개변수)
 IRIGFIX_SAMPLE_RATE = 80e6             (샘플링 레이트)
 ```
 
-**왜 변경하면 안 됨**:
-- ❌ IRIG 106-23 표준 정의
-- ❌ 암호/복호 불일치 → 통신 불가
-- ❌ 무선 규격 위반 (FCC 등)
-- ❌ 지상국과 호환 불가
+**변경하면 안되는 이유**:
+-  IRIG 106-23 표준 정의
+-  암호/복호 불일치 → 통신 불가
+-  무선 규격 위반 (FCC 등)
+-  지상국과 호환 불가
 
 ---
 
 # 자료 구조 (Struct) 완전 설명
 
-## 1️⃣ float_complex (복소수)
+## 1️ float_complex (복소수)
 
 ### 정의
 ```c
@@ -129,7 +129,7 @@ signal.imag = 0.479;
 
 ---
 
-## 2️⃣ SOQPSK_Modulator (변조기)
+## 2️ SOQPSK_Modulator (변조기)
 
 ### 정의
 ```c
@@ -171,7 +171,7 @@ I/Q 신호 출력 [float_complex]
 
 ---
 
-## 3️⃣ SOQPSK_Demodulator (복조기)
+## 3️ SOQPSK_Demodulator (복조기)
 
 ### 정의
 ```c
@@ -249,7 +249,7 @@ PLL (Phase Lock Loop)
 
 ---
 
-## 4️⃣ LDPC_Encoder / LDPC_Decoder
+## 4️ LDPC_Encoder / LDPC_Decoder
 
 ### 정의
 ```c
@@ -311,7 +311,7 @@ typedef struct {
 
 # 파일별 상세 가이드
 
-## 📁 include/missile_telemetry.h
+##  include/missile_telemetry.h
 
 ### 역할
 - 시스템 최상위 구조 정의
@@ -344,7 +344,7 @@ MissileTelemetrySystem: 시스템 상태
 
 ---
 
-## 📁 include/ldpc_codec.h
+##  include/ldpc_codec.h
 
 ### 역할
 - LDPC 오류 정정 코드 정의
@@ -377,7 +377,7 @@ LDPC_RATE_4_5 (4/5)
 
 ---
 
-## 📁 include/soqpsk.h
+##  include/soqpsk.h
 
 ### 역할
 - SOQPSK 변조/복조 정의
@@ -394,7 +394,7 @@ IRIGFIX_CPM_T2 = 0.50         /* 시간 파라미터 2 */
 
 ---
 
-## 📁 src/7_main_integration.c
+##  src/7_main_integration.c
 
 ### 역할
 - 모든 PT_/IRIG_/IRIGFIX_ 변수 정의
@@ -418,7 +418,7 @@ PT_TX_POWER_W = 3.0f
 
 # 변수 변경 효과
 
-## 📊 PT_LDPC_DECODER_MAX_ITERATIONS 변경
+##  PT_LDPC_DECODER_MAX_ITERATIONS 변경
 
 ```
 기본값: 50 반복
@@ -450,7 +450,7 @@ PT_TX_POWER_W = 3.0f
 
 ---
 
-## 📊 PT_PLL_BANDWIDTH_SCALE 변경
+##  PT_PLL_BANDWIDTH_SCALE 변경
 
 ```
 기본값: 0.01 (심볼 레이트의 1%)
@@ -482,7 +482,7 @@ PT_TX_POWER_W = 3.0f
 
 ---
 
-## 📊 PT_LAUNCH_ACCEL_THRESHOLD_G 변경
+##  PT_LAUNCH_ACCEL_THRESHOLD_G 변경
 
 ```
 기본값: 5.0 G
@@ -516,10 +516,10 @@ PT_TX_POWER_W = 3.0f
 
 # 전체 데이터 흐름
 
-## 🔄 완전한 송신 파이프라인
+##  완전한 송신 파이프라인
 
 ```
-1️⃣ 센서 수집 (PT_SENSOR_SAMPLE_PERIOD_MS마다)
+1️ 센서 수집 (PT_SENSOR_SAMPLE_PERIOD_MS마다)
    ├─ IMU: accel_x/y/z (±100 G)
    ├─ IMU: gyro_x/y/z (±2000 dps)
    ├─ 압력: 4개 채널 (PSI)
@@ -527,18 +527,18 @@ PT_TX_POWER_W = 3.0f
    ├─ GPS: lat/lon/alt
    └─ 배터리 전압
 
-2️⃣ MissileTelemetryFrame 생성
+2️ MissileTelemetryFrame 생성
    └─ 모든 센서 데이터 한 세트 패킹
 
-3️⃣ CRC-16 계산 및 추가
+3️ CRC-16 계산 및 추가
    └─ 오류 검출용
 
-4️⃣ 발사 감지 (PT_LAUNCH_ACCEL_THRESHOLD_G)
+4️ 발사 감지 (PT_LAUNCH_ACCEL_THRESHOLD_G)
    ├─ 가속도 크기 계산: √(ax² + ay² + az²)
    ├─ PT_LAUNCH_SUSTAINED_SAMPLES 동안 확인
    └─ 조건 만족 → telemetry_active = true
 
-5️⃣ 데이터 전송 (PT_DATA_TX_PERIOD_MS마다)
+5️ 데이터 전송 (PT_DATA_TX_PERIOD_MS마다)
    ├─ 프레임을 K=5461 비트로 변환
    ├─ LDPC 인코딩 (K 입력 → N=8192 코드워드)
    │  └─ PT_LDPC_DECODER_MAX_ITERATIONS, PT_LDPC_EARLY_TERMINATION
@@ -556,7 +556,7 @@ PT_TX_POWER_W = 3.0f
 
    ========== 채널 통과 (잡음 + 도플러 + 페이딩) ==========
 
-6️⃣ 지상국 수신 (수신기)
+6️ 지상국 수신 (수신기)
    ├─ RF 신호 수신 (I/Q 신호)
    ├─ SOQPSK 복조
    │  ├─ PLL 루프 (PT_PLL_BANDWIDTH_SCALE, PT_PLL_DAMPING_FACTOR)
@@ -573,13 +573,13 @@ PT_TX_POWER_W = 3.0f
    │  └─ 정보 비트 복원 (K=5461)
    └─ 센서 데이터 복원
 
-7️⃣ 텔레메트리 저장/분석
+7️ 텔레메트리 저장/분석
    └─ 비행 중 모든 센서 데이터 기록
 ```
 
 ---
 
-## 📈 각 모듈의 역할
+##  각 모듈의 역할
 
 | 모듈 | 입력 | 출력 | 목적 |
 |------|------|------|------|
@@ -599,7 +599,7 @@ PT_TX_POWER_W = 3.0f
 
 ---
 
-## ✅ 개발 가이드
+##  개발 가이드
 
 ### 초기 설정 (모두 기본값 사용)
 ```
@@ -633,7 +633,7 @@ IRIG_LDPC_CODE_RATE = LDPC_RATE_1_2  (강한 부호)
 
 ### 지상국 연동 (IRIG_ 조정)
 ```
-⚠️ IRIG_값 변경 시:
+ IRIG_값 변경 시:
 1. 채널 변경: IRIG_CARRIER_FREQ_HZ
 2. 데이터율 변경: IRIG_DATA_RATE_BPS
 3. 부호율 변경: IRIG_LDPC_CODE_RATE
@@ -648,7 +648,3 @@ IRIG_LDPC_CODE_RATE = LDPC_RATE_1_2  (강한 부호)
 ✅ 정기적인 성능 검증
 ✅ 비행 전 시스템 자가진단
 ```
-
----
-
-**완벽한 최종 설명서 완성!** 🎉
