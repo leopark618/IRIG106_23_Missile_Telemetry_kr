@@ -36,7 +36,9 @@ void TelemetryConfig_RegisterFloatParam(ConfigSet *config, uint8_t param_id,
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
+    /* ✅ 배열이므로 직접 복사 */
     strncpy(param->param_name, name, sizeof(param->param_name) - 1);
+    param->param_name[sizeof(param->param_name) - 1] = '\0';
     param->type = PARAM_TYPE_FLOAT;
     
     param->current.float_val = default_val;
@@ -59,7 +61,9 @@ void TelemetryConfig_RegisterIntParam(ConfigSet *config, uint8_t param_id,
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
+    /*  배열이므로 직접 복사 */
     strncpy(param->param_name, name, sizeof(param->param_name) - 1);
+    param->param_name[sizeof(param->param_name) - 1] = '\0';
     param->type = PARAM_TYPE_INT32;
     
     param->current.int_val = default_val;
@@ -81,7 +85,9 @@ void TelemetryConfig_RegisterBoolParam(ConfigSet *config, uint8_t param_id,
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
+    /*  배열이므로 직접 복사 */
     strncpy(param->param_name, name, sizeof(param->param_name) - 1);
+    param->param_name[sizeof(param->param_name) - 1] = '\0';
     param->type = PARAM_TYPE_BOOL;
     
     param->current.bool_val = default_val;
@@ -177,7 +183,8 @@ bool TelemetryConfig_ProcessUpdateMessage(ConfigSet *config,
 {
     if (!config || !msg) return false;
     
-    if (msg->msg_header != 0xCFGQ) return false;
+    /*  0xCFGQ 대신 0xCFG0 사용 (올바른 16진수) */
+    if (msg->msg_header != 0xCFG0) return false;
     
     bool all_success = true;
     
@@ -219,7 +226,8 @@ ConfigResponseMessage* TelemetryConfig_GenerateResponseMessage(ConfigSet *config
     ConfigResponseMessage *response = malloc(sizeof(ConfigResponseMessage));
     if (!response) return NULL;
     
-    response->msg_header = 0xCFGA;
+    /*  0xCFGA 대신 0xCFG1 사용 (올바른 16진수) */
+    response->msg_header = 0xCFG1;
     response->msg_type = 0x01;
     response->num_params = config->param_count;
     
@@ -227,8 +235,10 @@ ConfigResponseMessage* TelemetryConfig_GenerateResponseMessage(ConfigSet *config
         ConfigParameter *param = &config->params[i];
         
         response->param_info[i].param_id = param->param_id;
+        /*  배열이므로 직접 복사 */
         strncpy(response->param_info[i].param_name, param->param_name,
                 sizeof(response->param_info[i].param_name) - 1);
+        response->param_info[i].param_name[sizeof(response->param_info[i].param_name) - 1] = '\0';
         response->param_info[i].type = param->type;
         
         switch (param->type) {
