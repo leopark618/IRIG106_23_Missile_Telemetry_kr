@@ -6,25 +6,28 @@ void MissileTM_ReadSensors(MissileTelemetrySystem *sys)
 {
     if (!sys) return;
     
-    int16_t imu_raw;
+    /* IMU 데이터 읽기 */
+    int16_t imu_raw[6] = {0};
     
     float accel_scale = 100.0f / 32768.0f;
-    sys->current_frame.accel_x_g = imu_raw * accel_scale;
-    sys->current_frame.accel_y_g = imu_raw * accel_scale;
-    sys->current_frame.accel_z_g = imu_raw * accel_scale;
+    sys->current_frame.accel_x_g = imu_raw[0] * accel_scale;
+    sys->current_frame.accel_y_g = imu_raw[1] * accel_scale;
+    sys->current_frame.accel_z_g = imu_raw[2] * accel_scale;
     
     float gyro_scale = 2000.0f / 32768.0f;
-    sys->current_frame.gyro_x_dps = imu_raw * gyro_scale;
-    sys->current_frame.gyro_y_dps = imu_raw * gyro_scale;
-    sys->current_frame.gyro_z_dps = imu_raw * gyro_scale;
+    sys->current_frame.gyro_x_dps = imu_raw[3] * gyro_scale;
+    sys->current_frame.gyro_y_dps = imu_raw[4] * gyro_scale;
+    sys->current_frame.gyro_z_dps = imu_raw[5] * gyro_scale;
     
-    uint16_t pressure_adc;
+    /* 압력 센서 */
+    uint16_t pressure_adc[4] = {0};
     float pressure_scale = 10000.0f / 65535.0f;
     for (int i = 0; i < 4; i++) {
         sys->current_frame.pressure_psi[i] = pressure_adc[i] * pressure_scale;
     }
     
-    uint16_t temp_adc;
+    /* 온도 센서 */
+    uint16_t temp_adc[8] = {0};
     for (int i = 0; i < 8; i++) {
         float R = temp_adc[i] * 10000.0f / 65535.0f;
         float lnR = logf(R);
@@ -37,13 +40,14 @@ void MissileTM_ReadSensors(MissileTelemetrySystem *sys)
         sys->current_frame.temperature_c[i] = T_kelvin - 273.15f;
     }
     
-    uint8_t uart_rx;
+    /* 유도 명령 */
+    uint8_t uart_rx[64] = {0};
     int rx_len = 0;
     
     if (rx_len >= 40) {
-        memcpy(sys->current_frame.guidance_cmd, &uart_rx, 16);
-        memcpy(sys->current_frame.actuator_pos, &uart_rx, 16);
-        sys->current_frame.flight_mode = uart_rx;
+        memcpy((uint8_t*)sys->current_frame.guidance_cmd, &uart_rx[0], 16);
+        memcpy((uint8_t*)sys->current_frame.actuator_pos, &uart_rx[16], 16);
+        sys->current_frame.flight_mode = uart_rx[32];
     }
     
     sys->current_frame.frame_counter++;
