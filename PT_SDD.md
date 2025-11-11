@@ -103,7 +103,7 @@ IRIGFIX_SAMPLE_RATE = 80e6             (샘플링 레이트)
 
 # 자료 구조 (Struct) 완전 설명
 
-## 1️ float_complex (복소수)
+## 1️. float_complex (복소수)
 
 ### 정의
 ```c
@@ -129,7 +129,7 @@ signal.imag = 0.479;
 
 ---
 
-## 2️ SOQPSK_Modulator (변조기)
+## 2️. SOQPSK_Modulator (변조기)
 
 ### 정의
 ```c
@@ -171,7 +171,7 @@ I/Q 신호 출력 [float_complex]
 
 ---
 
-## 3️ SOQPSK_Demodulator (복조기)
+## 3️. SOQPSK_Demodulator (복조기)
 
 ### 정의
 ```c
@@ -249,7 +249,7 @@ PLL (Phase Lock Loop)
 
 ---
 
-## 4️ LDPC_Encoder / LDPC_Decoder
+## 4️. LDPC_Encoder / LDPC_Decoder
 
 ### 정의
 ```c
@@ -519,7 +519,7 @@ PT_TX_POWER_W = 3.0f
 ##  완전한 송신 파이프라인
 
 ```
-1️ 센서 수집 (PT_SENSOR_SAMPLE_PERIOD_MS마다)
+1️. 센서 수집 (PT_SENSOR_SAMPLE_PERIOD_MS마다)
    ├─ IMU: accel_x/y/z (±100 G)
    ├─ IMU: gyro_x/y/z (±2000 dps)
    ├─ 압력: 4개 채널 (PSI)
@@ -527,18 +527,18 @@ PT_TX_POWER_W = 3.0f
    ├─ GPS: lat/lon/alt
    └─ 배터리 전압
 
-2️ MissileTelemetryFrame 생성
+2️. MissileTelemetryFrame 생성
    └─ 모든 센서 데이터 한 세트 패킹
 
-3️ CRC-16 계산 및 추가
+3️. CRC-16 계산 및 추가
    └─ 오류 검출용
 
-4️ 발사 감지 (PT_LAUNCH_ACCEL_THRESHOLD_G)
+4️. 발사 감지 (PT_LAUNCH_ACCEL_THRESHOLD_G)
    ├─ 가속도 크기 계산: √(ax² + ay² + az²)
    ├─ PT_LAUNCH_SUSTAINED_SAMPLES 동안 확인
    └─ 조건 만족 → telemetry_active = true
 
-5️ 데이터 전송 (PT_DATA_TX_PERIOD_MS마다)
+5️. 데이터 전송 (PT_DATA_TX_PERIOD_MS마다)
    ├─ 프레임을 K=5461 비트로 변환
    ├─ LDPC 인코딩 (K 입력 → N=8192 코드워드)
    │  └─ PT_LDPC_DECODER_MAX_ITERATIONS, PT_LDPC_EARLY_TERMINATION
@@ -556,7 +556,7 @@ PT_TX_POWER_W = 3.0f
 
    ========== 채널 통과 (잡음 + 도플러 + 페이딩) ==========
 
-6️ 지상국 수신 (수신기)
+6️. 지상국 수신 (수신기)
    ├─ RF 신호 수신 (I/Q 신호)
    ├─ SOQPSK 복조
    │  ├─ PLL 루프 (PT_PLL_BANDWIDTH_SCALE, PT_PLL_DAMPING_FACTOR)
@@ -573,7 +573,7 @@ PT_TX_POWER_W = 3.0f
    │  └─ 정보 비트 복원 (K=5461)
    └─ 센서 데이터 복원
 
-7️ 텔레메트리 저장/분석
+7️. 텔레메트리 저장/분석
    └─ 비행 중 모든 센서 데이터 기록
 ```
 
