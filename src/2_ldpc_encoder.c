@@ -9,7 +9,7 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
     
     enc->rate = rate;
     enc->N = IRIGFIX_LDPC_N;  /* ✅ LDPC_N → IRIGFIX_LDPC_N */
-    
+    enc->K = 5461;  /* ✅ 기본값 설정 (switch 전에!) */
     /* ✅ LDPC_K_RATE_2_3 → 직접 값 지정 */
     switch (rate) {
         case LDPC_RATE_1_2: enc->K = 4096; break;  /* K = N/2 */
