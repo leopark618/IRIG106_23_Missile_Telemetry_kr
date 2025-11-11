@@ -2,7 +2,7 @@
 #define SOQPSK_H
 
 #include <stdint.h>
-#include <complex.h>
+
 
 #define SOQPSK_RHO 0.70
 #define SOQPSK_B 1.25
