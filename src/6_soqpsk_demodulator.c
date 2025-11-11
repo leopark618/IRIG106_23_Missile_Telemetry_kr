@@ -28,7 +28,7 @@ SOQPSK_Demodulator* SOQPSK_Demodulator_Create(float carrier_freq, float sample_r
     for (int i = 0; i < 8; i++) {
         demod->path_metrics[i] = 1e9f;
     }
-    demod->path_metrics = 0.0f;
+    demod->path_metrics[0] = 0.0f;
     
     return demod;
 }
@@ -38,8 +38,8 @@ void SOQPSK_Demodulator_Destroy(SOQPSK_Demodulator *demod)
     if (demod) free(demod);
 }
 
-void carrier_recovery_pll(const float complex *received_signal, int length,
-                          SOQPSK_Demodulator *demod, float complex *recovered_carrier)
+void carrier_recovery_pll(const float_complex *received_signal, int length,
+                          SOQPSK_Demodulator *demod, float_complex *recovered_carrier)
 {
     if (!demod) return;
     
@@ -50,11 +50,18 @@ void carrier_recovery_pll(const float complex *received_signal, int length,
     for (int i = 0; i < length; i++) {
         float cos_phase = cosf(demod->pll_phase);
         float sin_phase = sinf(demod->pll_phase);
-        float complex local_osc = cos_phase + sin_phase * _Complex_I;
         
-        float complex mixed = received_signal[i] * conj(local_osc);
+        float_complex local_osc;
+        local_osc.real = cos_phase;
+        local_osc.imag = sin_phase;
         
-        float error = cimagf(mixed) * (crealf(mixed) > 0 ? 1.0f : -1.0f);
+        float_complex mixed;
+        mixed.real = received_signal[i].real * local_osc.real + 
+                     received_signal[i].imag * local_osc.imag;
+        mixed.imag = received_signal[i].imag * local_osc.real - 
+                     received_signal[i].real * local_osc.imag;
+        
+        float error = mixed.imag * (mixed.real > 0 ? 1.0f : -1.0f);
         
         demod->pll_freq += Ki * error;
         demod->pll_phase += Kp * error + demod->pll_freq;
@@ -70,8 +77,8 @@ void carrier_recovery_pll(const float complex *received_signal, int length,
     }
 }
 
-void symbol_timing_recovery(const float complex *baseband_signal, int length,
-                            int samples_per_symbol, float complex *symbol_samples)
+void symbol_timing_recovery(const float_complex *baseband_signal, int length,
+                            int samples_per_symbol, float_complex *symbol_samples)
 {
     if (!baseband_signal || !symbol_samples) return;
     
@@ -88,28 +95,31 @@ void symbol_timing_recovery(const float complex *baseband_signal, int length,
         symbol_samples[out_idx] = baseband_signal[idx];
         out_idx++;
         
-        float complex early = baseband_signal[idx - samples_per_symbol/2];
-        float complex mid = baseband_signal[idx];
-        float complex late = baseband_signal[idx + samples_per_symbol/2];
+        float_complex early = baseband_signal[idx - samples_per_symbol/2];
+        float_complex mid = baseband_signal[idx];
+        float_complex late = baseband_signal[idx + samples_per_symbol/2];
         
-        float complex diff = late - early;
-        float error = crealf(diff * conj(mid));
+        float_complex diff;
+        diff.real = late.real - early.real;
+        diff.imag = late.imag - early.imag;
+        
+        float error = diff.real * mid.real + diff.imag * mid.imag;
         
         mu += K * error;
         
-        i += samples_per_symbol + mu;
-        mu = mu - floorf(mu);
+        i += samples_per_symbol + (int)mu;
+        mu = mu - (int)mu;
     }
 }
 
-void viterbi_detector(const float complex *symbols, int num_symbols,
+void viterbi_detector(const float_complex *symbols, int num_symbols,
                       uint8_t *decoded_bits)
 {
     if (!symbols || !decoded_bits) return;
     
     for (int i = 0; i < num_symbols; i++) {
-        float real_part = crealf(symbols[i]);
-        float imag_part = cimagf(symbols[i]);
+        float real_part = symbols[i].real;
+        float imag_part = symbols[i].imag;
         
         if (real_part > 0 && imag_part > 0) {
             decoded_bits[2*i] = 0;
@@ -127,21 +137,24 @@ void viterbi_detector(const float complex *symbols, int num_symbols,
     }
 }
 
-void SOQPSK_Demodulate(SOQPSK_Demodulator *demod, const float complex *received_signal,
+void SOQPSK_Demodulate(SOQPSK_Demodulator *demod, const float_complex *received_signal,
                        int length, uint8_t *output_bits)
 {
     if (!demod || !received_signal || !output_bits) return;
     
-    float complex *carrier = malloc(length * sizeof(float complex));
+    float_complex *carrier = malloc(length * sizeof(float_complex));
     carrier_recovery_pll(received_signal, length, demod, carrier);
     
-    float complex *baseband = malloc(length * sizeof(float complex));
+    float_complex *baseband = malloc(length * sizeof(float_complex));
     for (int i = 0; i < length; i++) {
-        baseband[i] = received_signal[i] * conj(carrier[i]);
+        baseband[i].real = received_signal[i].real * carrier[i].real + 
+                           received_signal[i].imag * carrier[i].imag;
+        baseband[i].imag = received_signal[i].imag * carrier[i].real - 
+                           received_signal[i].real * carrier[i].imag;
     }
     
     int num_symbols = length / demod->samples_per_symbol;
-    float complex *symbol_samples = malloc(num_symbols * sizeof(float complex));
+    float_complex *symbol_samples = malloc(num_symbols * sizeof(float_complex));
     symbol_timing_recovery(baseband, length, demod->samples_per_symbol, symbol_samples);
     
     viterbi_detector(symbol_samples, num_symbols, output_bits);
