@@ -9,7 +9,7 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
     
     enc->rate = rate;
     enc->N = LDPC_N;
-    enc->K = LDPC_K_RATE_2_3
+    enc->K = LDPC_K_RATE_2_3;
     
     switch (rate) {
         case LDPC_RATE_1_2: enc->K = LDPC_K_RATE_1_2; break;
