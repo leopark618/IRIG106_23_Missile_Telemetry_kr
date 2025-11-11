@@ -141,23 +141,40 @@ bool DataStorage_LoadFromSD(LogBuffer *log, const char *filename)
     if (!file) return false;
     
     uint32_t magic;
-    fread(&magic, sizeof(uint32_t), 1, file);
+    /* ✅ fread 반환값 확인 */
+    if (fread(&magic, sizeof(uint32_t), 1, file) != 1) {
+        fclose(file);
+        return false;
+    }
+    
     if (magic != IRIGFIX_LOG_MAGIC) {
         fclose(file);
         return false;
     }
     
     uint32_t count;
-    fread(&count, sizeof(uint32_t), 1, file);
+    /* ✅ fread 반환값 확인 */
+    if (fread(&count, sizeof(uint32_t), 1, file) != 1) {
+        fclose(file);
+        return false;
+    }
     
     for (uint32_t i = 0; i < count && i < log->buffer_capacity; i++) {
-        fread(&log->buffer[i], sizeof(LogEntry), 1, file);
+        /* ✅ fread 반환값 확인 */
+        if (fread(&log->buffer[i], sizeof(LogEntry), 1, file) != 1) {
+            fclose(file);
+            return false;
+        }
         
         if (log->buffer[i].camera_data_size > 0) {
             log->buffer[i].camera_data = malloc(log->buffer[i].camera_data_size);
             if (log->buffer[i].camera_data) {
-                fread(log->buffer[i].camera_data, 
-                      log->buffer[i].camera_data_size, 1, file);
+                /* ✅ fread 반환값 확인 */
+                if (fread(log->buffer[i].camera_data, 
+                          log->buffer[i].camera_data_size, 1, file) != 1) {
+                    free(log->buffer[i].camera_data);
+                    log->buffer[i].camera_data = NULL;
+                }
             }
         }
     }
