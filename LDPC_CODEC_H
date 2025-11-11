@@ -1,0 +1,17 @@
+#ifndef LDPC_CODEC_H
+#define LDPC_CODEC_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#define LDPC_N 8192
+#define LDPC_K_RATE_1_2 4096
+#define LDPC_K_RATE_2_3 5461
+#define LDPC_K_RATE_4_5 6554
+
+#define LDPC_CIRCULANT_SIZE 128
+#define LDPC_MAX_ITER 50
+#define LDPC_ASM_LENGTH 64
+
+typedef enum {
+    
