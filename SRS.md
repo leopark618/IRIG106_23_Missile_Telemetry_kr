@@ -1,4 +1,4 @@
-# 미사일 텔레메트리 시스템 v3
+# 미사일 텔레메트리 시스템 
 ## Software Requirements Specification (SRS)
 ### DO-178C DAL-A 준수 문서
 
