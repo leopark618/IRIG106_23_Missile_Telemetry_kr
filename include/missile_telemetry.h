@@ -18,19 +18,25 @@ typedef struct {
     uint32_t frame_counter;
     uint64_t timestamp_us;
     
+    /* IMU */
     float accel_x_g, accel_y_g, accel_z_g;
     float gyro_x_dps, gyro_y_dps, gyro_z_dps;
     
-    float pressure_psi;
-    float temperature_c;
+    /* 압력 및 온도 배열 */
+    float pressure_psi[NUM_PRESSURE_CHANNELS];
+    float temperature_c[NUM_TEMP_CHANNELS];
     
-    float guidance_cmd;
-    float actuator_pos;
+    /* 유도 제어 */
+    float guidance_cmd[NUM_GUIDANCE_CHANNELS];
+    float actuator_pos[NUM_GUIDANCE_CHANNELS];
     uint8_t flight_mode;
     
-    double latitude, longitude;
+    /* GPS */
+    double latitude;
+    double longitude;
     float altitude_m;
     
+    /* 시스템 */
     float battery_voltage;
     uint16_t system_status;
     uint16_t crc16;
