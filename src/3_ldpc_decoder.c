@@ -10,7 +10,7 @@ LDPC_Decoder* LDPC_Decoder_Create(LDPC_CodeRate rate)
     
     dec->rate = rate;
     dec->N = IRIGFIX_LDPC_N;  /* ✅ 수정 */
-    
+    dec->K = 5461;  /* ✅ 기본값 설정 */
     /* ✅ 직접 값 지정 */
     switch (rate) {
         case LDPC_RATE_1_2: dec->K = 4096; break;
