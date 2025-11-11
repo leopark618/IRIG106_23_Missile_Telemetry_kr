@@ -1,6 +1,8 @@
 #include "ldpc_codec.h"
 #include <stdint.h>
-
+const uint8_t LDPC_ASM_PATTERN[] = {
+    0x1A, 0xCF, 0xFC, 0x1D, 0x00, 0x00, 0x00, 0x00
+};
 #define PT_LFSR_INITIAL_SEED 0xACE1
 #define PT_RANDOMIZER_STATISTICS_ENABLE 0
 #define IRIGFIX_LFSR_POLY 0xB400
