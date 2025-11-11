@@ -119,10 +119,10 @@ void MissileTM_ProcessAndTransmit(MissileTelemetrySystem *sys)
         with_asm[i] = (LDPC_ASM_PATTERN[byte_idx] >> bit_idx) & 0x01;
     }
     
-    memcpy(&with_asm, randomized, LDPC_N);
+    memcpy(&with_asm[64], randomized, LDPC_N);
     
     int output_length = total_bits * IRIG_SAMPLES_PER_SYMBOL;
-    float complex *modulated = malloc(output_length * sizeof(float complex));
+    float_complex *modulated = malloc(output_length * sizeof(float_complex));
     
     SOQPSK_Modulate(g_soqpsk_mod, with_asm, total_bits, modulated);
     
