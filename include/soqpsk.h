@@ -3,10 +3,15 @@
 
 #include <stdint.h>
 
-#define SOQPSK_RHO 0.70
-#define SOQPSK_B 1.25
-#define SOQPSK_T1 1.5
-#define SOQPSK_T2 0.50
+/* ============================================================
+ * IRIG 106 Appendix M: SOQPSK-TG 변조
+ * ============================================================ */
+
+/* IRIGFIX_: 고정 상수 (변경 금지) */
+#define IRIGFIX_CPM_RHO 0.70                /* CPM 스무딩 인자 */
+#define IRIGFIX_CPM_B 1.25                  /* CPM 대역폭 인자 */
+#define IRIGFIX_CPM_T1 1.5                  /* CPM 시간 파라미터 1 */
+#define IRIGFIX_CPM_T2 0.50                 /* CPM 시간 파라미터 2 */
 
 typedef struct {
     float real;
@@ -33,7 +38,7 @@ typedef struct {
     float timing_mu, timing_error;
     
     uint8_t current_state;
-    float path_metrics[8];
+    float path_metrics;
 } SOQPSK_Demodulator;
 
 SOQPSK_Modulator* SOQPSK_Modulator_Create(float fc, float fs, int sps);
