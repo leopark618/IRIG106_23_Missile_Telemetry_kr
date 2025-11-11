@@ -7,6 +7,11 @@
 
 static uint16_t lfsr_state = PT_LFSR_INITIAL_SEED;
 
+/* ASM 패턴 정의 (여기에 추가!) */
+const uint8_t LDPC_ASM_PATTERN[] = {
+    0x1A, 0xCF, 0xFC, 0x1D, 0x00, 0x00, 0x00, 0x00
+};
+
 void LDPC_Randomizer_Init(uint32_t seed)
 {
     if (seed == 0) {
@@ -46,30 +51,27 @@ void LDPC_Derandomize(const uint8_t *input, uint8_t *output, int length)
     LDPC_Randomize(input, output, length);
 }
 
-
 int LDPC_DetectASM(const uint8_t *stream, int len)
 {
-    if (!stream || len < LDPC_ASM_LENGTH) return -1;
+    if (!stream || len < 64) return -1;
     
-    int asm_bytes = LDPC_ASM_LENGTH / 8;
+    int asm_size = sizeof(LDPC_ASM_PATTERN);
     
-    for (int i = 0; i <= len - LDPC_ASM_LENGTH; i++) {
-        int match_bits = 0;
+    for (int i = 0; i <= len - 64; i++) {
+        int match_count = 0;
         
-        for (int j = 0; j < asm_bytes; j++) {
-            int byte_idx = i / 8 + j;
-            int bit_offset = i % 8;
-            
-            uint8_t window_byte = (stream[byte_idx] >> bit_offset);
-            if (bit_offset > 0) {
-                window_byte |= (stream[byte_idx + 1] << (8 - bit_offset));
+        for (int j = 0; j < asm_size && j < 8; j++) {
+            if (i + j < len) {
+                uint8_t diff = stream[i + j] ^ LDPC_ASM_PATTERN[j];
+                int bits = 0;
+                for (int k = 0; k < 8; k++) {
+                    if (diff & (1 << k)) bits++;
+                }
+                match_count += bits;
             }
-            
-            uint8_t diff = window_byte ^ LDPC_ASM_PATTERN[j];
-            match_bits += __builtin_popcount(diff);
         }
         
-        if (match_bits <= 2) {
+        if (match_count <= 2) {
             return i;
         }
     }
