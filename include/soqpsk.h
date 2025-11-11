@@ -38,7 +38,7 @@ typedef struct {
     float timing_mu, timing_error;
     
     uint8_t current_state;
-    float path_metrics;
+    float path_metrics[8];
 } SOQPSK_Demodulator;
 
 SOQPSK_Modulator* SOQPSK_Modulator_Create(float fc, float fs, int sps);
