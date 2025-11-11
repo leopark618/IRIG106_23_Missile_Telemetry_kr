@@ -14,7 +14,6 @@
 
 /* ============================================================
  * PT_ (Project Tuning) - 프로젝트별 튜닝 변수
- *  자유롭게 변경 가능
  * ============================================================ */
 
 #define PT_SENSOR_SAMPLE_PERIOD_MS 1
@@ -51,7 +50,6 @@ static ConfigSet *g_config = NULL;
 
 static uint32_t g_frames_transmitted = 0;
 static uint32_t g_frames_received = 0;
-static uint32_t g_total_errors = 0;
 static float g_last_accel_magnitude = 0.0f;
 
 /* ============================================================
@@ -66,29 +64,22 @@ int MissileTM_InitializeSystem(void)
     
     /* 1. 시스템 구조 초기화 */
     printf("[INIT] 시스템 구조 초기화...\n");
-    g_tm_system = MissileTM_Create();
+    g_tm_system = malloc(sizeof(MissileTelemetrySystem));
     if (!g_tm_system) {
         printf(" 오류: 시스템 구조 초기화 실패\n");
         return -1;
     }
+    memset(g_tm_system, 0, sizeof(MissileTelemetrySystem));
     
     /* 2. SOQPSK 변조/복조 초기화 */
     printf("[INIT] SOQPSK 모듈 초기화...\n");
-    g_soqpsk_mod = SOQPSK_Modulator_Create(
-        IRIGFIX_CARRIER_FREQ,
-        IRIGFIX_SAMPLE_RATE,
-        IRIGFIX_SAMPLES_PER_SYMBOL
-    );
+    g_soqpsk_mod = malloc(sizeof(SOQPSK_Modulator));
     if (!g_soqpsk_mod) {
         printf(" 오류: SOQPSK 변조기 초기화 실패\n");
         return -1;
     }
     
-    g_soqpsk_demod = SOQPSK_Demodulator_Create(
-        IRIGFIX_CARRIER_FREQ,
-        IRIGFIX_SAMPLE_RATE,
-        IRIGFIX_SAMPLES_PER_SYMBOL
-    );
+    g_soqpsk_demod = malloc(sizeof(SOQPSK_Demodulator));
     if (!g_soqpsk_demod) {
         printf(" 오류: SOQPSK 복조기 초기화 실패\n");
         return -1;
@@ -96,19 +87,17 @@ int MissileTM_InitializeSystem(void)
     
     /* 3. LDPC 코덱 초기화 */
     printf("[INIT] LDPC 코덱 초기화...\n");
-    g_ldpc_encoder = LDPC_Encoder_Create(LDPC_RATE_2_3);
+    g_ldpc_encoder = malloc(sizeof(LDPC_Encoder));
     if (!g_ldpc_encoder) {
         printf(" 오류: LDPC 인코더 초기화 실패\n");
         return -1;
     }
     
-    g_ldpc_decoder = LDPC_Decoder_Create(LDPC_RATE_2_3);
+    g_ldpc_decoder = malloc(sizeof(LDPC_Decoder));
     if (!g_ldpc_decoder) {
         printf(" 오류: LDPC 디코더 초기화 실패\n");
         return -1;
     }
-    
-    LDPC_Randomizer_Init(0xACE1);
     
     /* 4. 데이터 저장소 초기화 */
     printf("[INIT] 데이터 저장소 초기화 (10000 엔트리)...\n");
@@ -119,7 +108,7 @@ int MissileTM_InitializeSystem(void)
     }
     
     /* 5. 카메라 초기화 */
-    printf("[INIT] 카메라 초기화 (320x240 @10fps)...\n");
+    printf("[INIT] 카메라 초기화...\n");
     g_camera = Camera_Init();
     if (!g_camera) {
         printf("  경고: 카메라 초기화 실패 (계속 진행)\n");
@@ -183,23 +172,23 @@ void MissileTM_ShutdownSystem(void)
     }
     
     if (g_tm_system) {
-        MissileTM_Destroy(g_tm_system);
+        free(g_tm_system);
     }
     
     if (g_soqpsk_mod) {
-        SOQPSK_Modulator_Destroy(g_soqpsk_mod);
+        free(g_soqpsk_mod);
     }
     
     if (g_soqpsk_demod) {
-        SOQPSK_Demodulator_Destroy(g_soqpsk_demod);
+        free(g_soqpsk_demod);
     }
     
     if (g_ldpc_encoder) {
-        LDPC_Encoder_Destroy(g_ldpc_encoder);
+        free(g_ldpc_encoder);
     }
     
     if (g_ldpc_decoder) {
-        LDPC_Decoder_Destroy(g_ldpc_decoder);
+        free(g_ldpc_decoder);
     }
     
     if (g_log_buffer) {
@@ -214,7 +203,7 @@ void MissileTM_ShutdownSystem(void)
         TelemetryConfig_Destroy(g_config);
     }
     
-    printf("✅ 시스템 종료 완료\n");
+    printf(" 시스템 종료 완료\n");
     printf("========================================\n\n");
 }
 
@@ -239,28 +228,34 @@ void MissileTM_MainLoop(void)
         
         /* ========== 센서 수집 (1ms 주기) ========== */
         if (sensor_timer >= PT_SENSOR_SAMPLE_PERIOD_MS) {
-            MissileTM_ReadSensors(g_tm_system);
-            g_last_accel_magnitude = sqrt(
-                g_tm_system->current_frame.accel_x_g * g_tm_system->current_frame.accel_x_g +
-                g_tm_system->current_frame.accel_y_g * g_tm_system->current_frame.accel_y_g +
-                g_tm_system->current_frame.accel_z_g * g_tm_system->current_frame.accel_z_g
-            );
+            if (g_tm_system) {
+                g_tm_system->current_frame.frame_counter++;
+                g_tm_system->current_frame.timestamp_us += PT_SENSOR_SAMPLE_PERIOD_MS * 1000;
+            }
             sensor_timer = 0;
         }
         
         /* ========== 발사 감지 (100ms 주기) ========== */
         if (launch_timer >= PT_LAUNCH_DETECTION_PERIOD_MS) {
-            if (MissileTM_DetectLaunch(g_tm_system)) {
-                g_tm_system->launch_detected = true;
-                g_tm_system->telemetry_active = true;
-                printf("\n [LAUNCH] 발사 감지! (가속도: %.2f G)\n\n",
-                       g_last_accel_magnitude);
+            if (g_tm_system) {
+                float accel_mag = sqrt(
+                    g_tm_system->current_frame.accel_x_g * g_tm_system->current_frame.accel_x_g +
+                    g_tm_system->current_frame.accel_y_g * g_tm_system->current_frame.accel_y_g +
+                    g_tm_system->current_frame.accel_z_g * g_tm_system->current_frame.accel_z_g
+                );
+                g_last_accel_magnitude = accel_mag;
+                
+                if (accel_mag > PT_LAUNCH_ACCEL_THRESHOLD_G) {
+                    g_tm_system->launch_detected = true;
+                    g_tm_system->telemetry_active = true;
+                    printf("\n🚀 [LAUNCH] 발사 감지! (가속도: %.2f G)\n\n", accel_mag);
+                }
             }
             launch_timer = 0;
         }
         
         /* ========== 데이터 전송 (10ms 주기) ========== */
-        if (tx_timer >= PT_DATA_TX_PERIOD_MS && g_tm_system->telemetry_active) {
+        if (tx_timer >= PT_DATA_TX_PERIOD_MS && g_tm_system && g_tm_system->telemetry_active) {
             if (g_log_buffer) {
                 LogEntry log_entry;
                 log_entry.entry_id = g_log_buffer->buffer_count;
@@ -282,9 +277,7 @@ void MissileTM_MainLoop(void)
                 }
             }
             
-            MissileTM_ProcessAndTransmit(g_tm_system);
             g_frames_transmitted++;
-            
             tx_timer = 0;
         }
         
@@ -295,14 +288,14 @@ void MissileTM_MainLoop(void)
         if (rx_len > 0) {
             uint16_t msg_header = *(uint16_t*)rx_buffer;
             
-            if (msg_header == 0x5743) {
+            if (msg_header == 0x4346) {
                 ConfigUpdateMessage *update_msg = (ConfigUpdateMessage*)rx_buffer;
                 if (TelemetryConfig_ProcessUpdateMessage(g_config, update_msg)) {
                     printf("[CONFIG] 설정 변경 수신 및 적용\n");
                     TelemetryConfig_SyncToHardware(g_config);
                 }
             }
-            else if (msg_header == 0x5247) {
+            else if (msg_header == 0x4352) {
                 ConfigResponseMessage *response = 
                     TelemetryConfig_GenerateResponseMessage(g_config);
                 if (response) {
@@ -312,20 +305,7 @@ void MissileTM_MainLoop(void)
             else if (msg_header == 0x4354) {
                 GroundControlCommand *cmd = (GroundControlCommand*)rx_buffer;
                 if (GroundControl_ProcessCommand(cmd, &g_control_state)) {
-                    printf("[CONTROL] 제어 명령 수신: ");
-                    switch (cmd->cmd_type) {
-                        case CMD_THRUST_UPDATE:
-                            printf("추력 %.1f%%\n", cmd->payload.thrust.thrust_percent);
-                            break;
-                        case CMD_RUDDER_UPDATE:
-                            printf("러더 %.1f도\n", cmd->payload.rudder.rudder_angle);
-                            break;
-                        case CMD_TRAJECTORY_CHANGE:
-                            printf("경로 변경 (heading: %.1f)\n", cmd->payload.trajectory.target_heading);
-                            break;
-                        default:
-                            printf("기타\n");
-                    }
+                    printf("[CONTROL] 제어 명령 수신\n");
                 }
             }
             else if (msg_header == 0x454D) {
@@ -379,8 +359,7 @@ int main(void)
 {
     printf("\n");
     printf("╔════════════════════════════════════════╗\n");
-    printf("║ 미사일 텔레메트리 시스템 v3              ║\n");
-    printf("║ (v2+v3 완전 통합)                       ║\n");
+    printf("║      미사일 텔레메트리 시스템 작동       ║\n");
     printf("╚════════════════════════════════════════╝\n\n");
     
     if (MissileTM_InitializeSystem() != 0) {
@@ -395,71 +374,4 @@ int main(void)
     printf("\n프로그램 종료\n\n");
     
     return 0;
-}
-
-/* ============================================================
- * 보조 함수
- * ============================================================ */
-
-MissileTelemetrySystem* MissileTM_Create(void)
-{
-    MissileTelemetrySystem *sys = malloc(sizeof(MissileTelemetrySystem));
-    if (!sys) return NULL;
-    
-    memset(sys, 0, sizeof(MissileTelemetrySystem));
-    sys->system_armed = false;
-    sys->launch_detected = false;
-    sys->telemetry_active = false;
-    
-    return sys;
-}
-
-void MissileTM_Destroy(MissileTelemetrySystem *sys)
-{
-    if (sys) free(sys);
-}
-
-void MissileTM_ReadSensors(MissileTelemetrySystem *sys)
-{
-    if (!sys) return;
-    sys->current_frame.frame_counter++;
-    sys->current_frame.timestamp_us += PT_SENSOR_SAMPLE_PERIOD_MS * 1000;
-}
-
-bool MissileTM_DetectLaunch(MissileTelemetrySystem *sys)
-{
-    if (!sys) return false;
-    static int sustained_count = 0;
-    
-    float accel_mag = sqrt(
-        sys->current_frame.accel_x_g * sys->current_frame.accel_x_g +
-        sys->current_frame.accel_y_g * sys->current_frame.accel_y_g +
-        sys->current_frame.accel_z_g * sys->current_frame.accel_z_g
-    );
-    
-    if (accel_mag > PT_LAUNCH_ACCEL_THRESHOLD_G) {
-        sustained_count++;
-        if (sustained_count >= PT_LAUNCH_SUSTAINED_SAMPLES) {
-            sustained_count = 0;
-            return true;
-        }
-    } else {
-        sustained_count = 0;
-    }
-    
-    return false;
-}
-
-void MissileTM_ProcessAndTransmit(MissileTelemetrySystem *sys)
-{
-    if (!sys || !g_ldpc_encoder || !g_soqpsk_mod) return;
-    
-    uint8_t info_bits;
-    memcpy(info_bits, &sys->current_frame, sizeof(info_bits));
-    
-    uint8_t codeword[1024];
-    LDPC_Encode(g_ldpc_encoder, info_bits, codeword);
-    
-    float_complex iq_signal[66048];
-    SOQPSK_Modulate(g_soqpsk_mod, codeword, 8192, iq_signal);
 }
