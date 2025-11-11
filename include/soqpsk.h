@@ -3,11 +3,15 @@
 
 #include <stdint.h>
 
-
 #define SOQPSK_RHO 0.70
 #define SOQPSK_B 1.25
 #define SOQPSK_T1 1.5
 #define SOQPSK_T2 0.50
+
+typedef struct {
+    float real;
+    float imag;
+} float_complex;
 
 typedef struct {
     float carrier_freq;
@@ -29,17 +33,17 @@ typedef struct {
     float timing_mu, timing_error;
     
     uint8_t current_state;
-    float path_metrics;
+    float path_metrics[8];
 } SOQPSK_Demodulator;
 
 SOQPSK_Modulator* SOQPSK_Modulator_Create(float fc, float fs, int sps);
 void SOQPSK_Modulator_Destroy(SOQPSK_Modulator *mod);
 void SOQPSK_Modulate(SOQPSK_Modulator *mod, const uint8_t *bits, 
-                     int nbits, float complex *output);
+                     int nbits, float_complex *output);
 
 SOQPSK_Demodulator* SOQPSK_Demodulator_Create(float fc, float fs, int sps);
 void SOQPSK_Demodulator_Destroy(SOQPSK_Demodulator *demod);
-void SOQPSK_Demodulate(SOQPSK_Demodulator *demod, const float complex *rx, 
+void SOQPSK_Demodulate(SOQPSK_Demodulator *demod, const float_complex *rx, 
                        int len, uint8_t *bits);
 
 void differential_precoder(const uint8_t *in, int8_t *out, int n);
