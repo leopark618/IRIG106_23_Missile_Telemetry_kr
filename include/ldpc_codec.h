@@ -4,14 +4,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LDPC_N 8192
-#define LDPC_K_RATE_1_2 4096
-#define LDPC_K_RATE_2_3 5461
-#define LDPC_K_RATE_4_5 6554
+/* ============================================================
+ * IRIG 106 Appendix R: LDPC 코드
+ * ============================================================ */
 
-#define LDPC_CIRCULANT_SIZE 128
-#define LDPC_MAX_ITER 50
-#define LDPC_ASM_LENGTH 64
+/* IRIGFIX_: 고정 상수 (변경 금지) */
+#define IRIGFIX_LDPC_N 8192                 /* 코드워드 길이 */
+#define IRIGFIX_LDPC_CIRCULANT_SIZE 128     /* 순환 블록 크기 */
+#define IRIGFIX_LDPC_ASM_LENGTH 64          /* ASM 길이 (비트) */
+
+#define IRIGFIX_LFSR_POLY 0xB400            /* LFSR 다항식 */
+#define IRIGFIX_LFSR_WIDTH 16               /* LFSR 비트폭 */
 
 typedef enum {
     LDPC_RATE_1_2 = 0,
