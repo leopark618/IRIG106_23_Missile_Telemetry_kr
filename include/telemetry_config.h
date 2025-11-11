@@ -6,7 +6,7 @@
 #include <string.h>
 
 /* ============================================================
- * PT_: 프로젝트 튜닝
+ * PT_: 프로젝트 튜닝 - 자유롭게 변경
  * ============================================================ */
 
 #define PT_CONFIG_BUFFER_SIZE 4096
@@ -14,7 +14,7 @@
 #define PT_CONFIG_MAX_PARAMS 100
 
 /* ============================================================
- * IRIGFIX_: 고정
+ * IRIGFIX_: IRIG 106 고정 - 절대 변경 금지
  * ============================================================ */
 
 #define IRIGFIX_CONFIG_VERSION 2
@@ -31,12 +31,12 @@ typedef enum {
 } ParamType;
 
 /* ============================================================
- * 파라미터 구조
+ * 파라미터 구조 (문자열을 포인터로 변경)
  * ============================================================ */
 
 typedef struct {
     uint8_t param_id;
-    char param_name;
+    char *param_name;                    /* ✅ 포인터로 변경 */
     ParamType type;
     
     union {
@@ -75,12 +75,12 @@ typedef struct {
 } ConfigSet;
 
 /* ============================================================
- * 송수신 메시지
+ * 송수신 메시지 (헤더값 수정)
  * ============================================================ */
 
 typedef struct {
-    uint16_t msg_header;
-    uint8_t msg_type;
+    uint16_t msg_header;                /* 0x4346 = "CF" */
+    uint8_t msg_type;                   /* 0x01: 조회, 0x02: 변경 */
     uint16_t msg_len;
     
     uint8_t num_params;
@@ -99,15 +99,15 @@ typedef struct {
 } ConfigUpdateMessage;
 
 typedef struct {
-    uint16_t msg_header;
-    uint8_t msg_type;
+    uint16_t msg_header;                /* 0x4352 = "CR" */
+    uint8_t msg_type;                   /* 0x01: 조회 응답 */
     uint16_t msg_len;
     
     uint8_t num_params;
     
     struct {
         uint8_t param_id;
-        char param_name;
+        char *param_name;               /* ✅ 포인터로 변경 */
         uint8_t type;
         union {
             float float_val;
