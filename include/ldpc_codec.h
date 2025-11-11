@@ -49,9 +49,7 @@ void LDPC_Randomizer_Init(uint32_t seed);
 void LDPC_Randomize(const uint8_t *in, uint8_t *out, int len);
 void LDPC_Derandomize(const uint8_t *in, uint8_t *out, int len);
 
-const uint8_t LDPC_ASM_PATTERN[] = {
-    0x1A, 0xCF, 0xFC, 0x1D, 0x00, 0x00, 0x00, 0x00
-};
+extern const uint8_t LDPC_ASM_PATTERN[];
 int LDPC_DetectASM(const uint8_t *stream, int len);
 
 #endif
