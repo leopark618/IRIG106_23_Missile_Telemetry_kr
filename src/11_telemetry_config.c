@@ -24,21 +24,29 @@ ConfigSet* TelemetryConfig_Init(void)
 
 void TelemetryConfig_Destroy(ConfigSet *config)
 {
-    if (config) free(config);
+    if (config) {
+        for (uint8_t i = 0; i < config->param_count; i++) {
+            if (config->params[i].param_name) {
+                free(config->params[i].param_name);
+            }
+        }
+        free(config);
+    }
 }
 
 void TelemetryConfig_RegisterFloatParam(ConfigSet *config, uint8_t param_id,
                                          const char *name, float default_val,
                                          float min_val, float max_val)
 {
-    if (!config || param_id >= PT_CONFIG_MAX_PARAMS) return;
+    if (!config || param_id >= PT_CONFIG_MAX_PARAMS || !name) return;
     
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
-    /* ✅ 배열이므로 직접 복사 */
-    strncpy(param->param_name, name, sizeof(param->param_name) - 1);
-    param->param_name[sizeof(param->param_name) - 1] = '\0';
+    param->param_name = malloc(strlen(name) + 1);
+    if (param->param_name) {
+        strcpy(param->param_name, name);
+    }
     param->type = PARAM_TYPE_FLOAT;
     
     param->current.float_val = default_val;
@@ -56,14 +64,15 @@ void TelemetryConfig_RegisterIntParam(ConfigSet *config, uint8_t param_id,
                                        const char *name, int32_t default_val,
                                        int32_t min_val, int32_t max_val)
 {
-    if (!config || param_id >= PT_CONFIG_MAX_PARAMS) return;
+    if (!config || param_id >= PT_CONFIG_MAX_PARAMS || !name) return;
     
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
-    /*  배열이므로 직접 복사 */
-    strncpy(param->param_name, name, sizeof(param->param_name) - 1);
-    param->param_name[sizeof(param->param_name) - 1] = '\0';
+    param->param_name = malloc(strlen(name) + 1);
+    if (param->param_name) {
+        strcpy(param->param_name, name);
+    }
     param->type = PARAM_TYPE_INT32;
     
     param->current.int_val = default_val;
@@ -80,14 +89,15 @@ void TelemetryConfig_RegisterIntParam(ConfigSet *config, uint8_t param_id,
 void TelemetryConfig_RegisterBoolParam(ConfigSet *config, uint8_t param_id,
                                         const char *name, bool default_val)
 {
-    if (!config || param_id >= PT_CONFIG_MAX_PARAMS) return;
+    if (!config || param_id >= PT_CONFIG_MAX_PARAMS || !name) return;
     
     ConfigParameter *param = &config->params[param_id];
     
     param->param_id = param_id;
-    /*  배열이므로 직접 복사 */
-    strncpy(param->param_name, name, sizeof(param->param_name) - 1);
-    param->param_name[sizeof(param->param_name) - 1] = '\0';
+    param->param_name = malloc(strlen(name) + 1);
+    if (param->param_name) {
+        strcpy(param->param_name, name);
+    }
     param->type = PARAM_TYPE_BOOL;
     
     param->current.bool_val = default_val;
@@ -183,8 +193,8 @@ bool TelemetryConfig_ProcessUpdateMessage(ConfigSet *config,
 {
     if (!config || !msg) return false;
     
-    /*  0xCFGQ 대신 0xCFG0 사용 (올바른 16진수) */
-    if (msg->msg_header != 0xCFG0) return false;
+    /*  올바른 헤더값: 0x4346 = "CF" */
+    if (msg->msg_header != 0x4346) return false;
     
     bool all_success = true;
     
@@ -226,8 +236,8 @@ ConfigResponseMessage* TelemetryConfig_GenerateResponseMessage(ConfigSet *config
     ConfigResponseMessage *response = malloc(sizeof(ConfigResponseMessage));
     if (!response) return NULL;
     
-    /*  0xCFGA 대신 0xCFG1 사용 (올바른 16진수) */
-    response->msg_header = 0xCFG1;
+    /*  올바른 헤더값: 0x4352 = "CR" */
+    response->msg_header = 0x4352;
     response->msg_type = 0x01;
     response->num_params = config->param_count;
     
@@ -235,10 +245,9 @@ ConfigResponseMessage* TelemetryConfig_GenerateResponseMessage(ConfigSet *config
         ConfigParameter *param = &config->params[i];
         
         response->param_info[i].param_id = param->param_id;
-        /*  배열이므로 직접 복사 */
-        strncpy(response->param_info[i].param_name, param->param_name,
-                sizeof(response->param_info[i].param_name) - 1);
-        response->param_info[i].param_name[sizeof(response->param_info[i].param_name) - 1] = '\0';
+        
+        /*  포인터 직접 할당 */
+        response->param_info[i].param_name = param->param_name;
         response->param_info[i].type = param->type;
         
         switch (param->type) {
@@ -275,25 +284,8 @@ void TelemetryConfig_SyncToHardware(ConfigSet *config)
         
         if (!param->is_dirty) continue;
         
-        switch (param->param_id) {
-            case 0:
-                printf("[CONFIG] 센서 샘플링 주기: %d ms\n",
-                       param->current.int_val);
-                break;
-            case 1:
-                printf("[CONFIG] 데이터 전송 주기: %d ms\n",
-                       param->current.int_val);
-                break;
-            case 2:
-                printf("[CONFIG] 발사 임계값: %.1f G\n",
-                       param->current.float_val);
-                break;
-            case 3:
-                printf("[CONFIG] PLL 대역폭: %.4f\n",
-                       param->current.float_val);
-                break;
-            default:
-                break;
+        if (param->param_name) {
+            printf("[CONFIG] %s 변경됨\n", param->param_name);
         }
         
         param->is_dirty = false;
