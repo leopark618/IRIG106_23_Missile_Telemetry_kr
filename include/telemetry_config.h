@@ -36,7 +36,7 @@ typedef enum {
 
 typedef struct {
     uint8_t param_id;
-    char *param_name;                    /* ✅ 포인터로 변경 */
+    char *param_name;                    /*  포인터로 변경 */
     ParamType type;
     
     union {
@@ -107,7 +107,7 @@ typedef struct {
     
     struct {
         uint8_t param_id;
-        char *param_name;               /* ✅ 포인터로 변경 */
+        char *param_name;               /*  포인터로 변경 */
         uint8_t type;
         union {
             float float_val;
