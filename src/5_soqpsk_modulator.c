@@ -70,8 +70,8 @@ void create_frequency_pulse(float *pulse, int length, float Ts)
 {
     if (!pulse) return;
     
-    float rho = SOQPSK_RHO;
-    float B = SOQPSK_B;
+    float rho = IRIGFIX_CPM_RHO; 
+    float B = IRIGFIX_CPM_B;  
     
     int center = length / 2;
     
