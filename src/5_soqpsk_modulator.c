@@ -93,7 +93,7 @@ void create_frequency_pulse(float *pulse, int length, float Ts)
 }
 
 void SOQPSK_Modulate(SOQPSK_Modulator *mod, const uint8_t *input_bits, 
-                     int num_bits, float complex *output_signal)
+                     int num_bits, float_complex *output_signal)
 {
     if (!mod || !input_bits || !output_signal) return;
     
@@ -137,7 +137,8 @@ void SOQPSK_Modulate(SOQPSK_Modulator *mod, const uint8_t *input_bits,
         float I = cosf(total_phase);
         float Q = sinf(total_phase);
         
-        output_signal[i] = I + Q * I;
+        output_signal[i].real = I;
+        output_signal[i].imag = Q;
     }
     
     free(ternary_data);
