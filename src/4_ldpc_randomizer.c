@@ -7,11 +7,6 @@
 
 static uint16_t lfsr_state = PT_LFSR_INITIAL_SEED;
 
-/* ASM 패턴 정의 (여기에 추가!) */
-const uint8_t LDPC_ASM_PATTERN[] = {
-    0x1A, 0xCF, 0xFC, 0x1D, 0x00, 0x00, 0x00, 0x00
-};
-
 void LDPC_Randomizer_Init(uint32_t seed)
 {
     if (seed == 0) {
@@ -55,12 +50,10 @@ int LDPC_DetectASM(const uint8_t *stream, int len)
 {
     if (!stream || len < 64) return -1;
     
-    int asm_size = sizeof(LDPC_ASM_PATTERN);
-    
     for (int i = 0; i <= len - 64; i++) {
         int match_count = 0;
         
-        for (int j = 0; j < asm_size && j < 8; j++) {
+        for (int j = 0; j < 8; j++) {
             if (i + j < len) {
                 uint8_t diff = stream[i + j] ^ LDPC_ASM_PATTERN[j];
                 int bits = 0;
