@@ -8,23 +8,22 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
     if (!enc) return NULL;
     
     enc->rate = rate;
-    enc->N = LDPC_N;
-    enc->K = LDPC_K_RATE_2_3;
+    enc->N = IRIGFIX_LDPC_N;  /* ✅ LDPC_N → IRIGFIX_LDPC_N */
     
+    /* ✅ LDPC_K_RATE_2_3 → 직접 값 지정 */
     switch (rate) {
-        case LDPC_RATE_1_2: enc->K = LDPC_K_RATE_1_2; break;
-        case LDPC_RATE_2_3: enc->K = LDPC_K_RATE_2_3; break;
-        case LDPC_RATE_4_5: enc->K = LDPC_K_RATE_4_5; break;
+        case LDPC_RATE_1_2: enc->K = 4096; break;  /* K = N/2 */
+        case LDPC_RATE_2_3: enc->K = 5461; break;  /* K ≈ 2N/3 */
+        case LDPC_RATE_4_5: enc->K = 6554; break;  /* K ≈ 4N/5 */
     }
     
     enc->M = enc->N - enc->K;
-    
-    enc->proto_rows = enc->M / LDPC_CIRCULANT_SIZE;
-    enc->proto_cols = enc->N / LDPC_CIRCULANT_SIZE;
+    enc->proto_rows = enc->M / IRIGFIX_LDPC_CIRCULANT_SIZE;  /* ✅ LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
+    enc->proto_cols = enc->N / IRIGFIX_LDPC_CIRCULANT_SIZE;
     
     enc->proto_matrix = malloc(enc->proto_rows * sizeof(int8_t*));
     for (int i = 0; i < enc->proto_rows; i++) {
-        enc->proto_matrix[i] = malloc(enc->proto_cols * sizeof(int8_t));
+        enc->proto_matrix[i] = calloc(enc->proto_cols, sizeof(int8_t));
     }
     
     return enc;
@@ -33,38 +32,42 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
 void LDPC_Encoder_Destroy(LDPC_Encoder *enc)
 {
     if (enc) {
-        for (int i = 0; i < enc->proto_rows; i++) {
-            free(enc->proto_matrix[i]);
+        if (enc->proto_matrix) {
+            for (int i = 0; i < enc->proto_rows; i++) {
+                free(enc->proto_matrix[i]);
+            }
+            free(enc->proto_matrix);
         }
-        free(enc->proto_matrix);
         free(enc);
     }
 }
 
-void LDPC_Encode(LDPC_Encoder *enc, const uint8_t *info_bits, 
-                 uint8_t *codeword)
+void LDPC_Encode(LDPC_Encoder *enc, const uint8_t *info, uint8_t *codeword)
 {
-    if (!enc || !info_bits || !codeword) return;
+    if (!enc || !info || !codeword) return;
     
-    memcpy(codeword, info_bits, enc->K);
+    memcpy(codeword, info, enc->K);
     
-    uint8_t *parity = &codeword[enc->K];
-    memset(parity, 0, enc->M);
+    int z = IRIGFIX_LDPC_CIRCULANT_SIZE;  /* ✅ LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
     
-    int z = LDPC_CIRCULANT_SIZE;
+    for (int i = 0; i < enc->M; i++) {
+        codeword[enc->K + i] = 0;
+    }
     
-    for (int p_block = 0; p_block < enc->proto_rows; p_block++) {
-        for (int i_block = 0; i_block < enc->proto_cols; i_block++) {
-            int shift = enc->proto_matrix[p_block][i_block];
-            
+    for (int row = 0; row < enc->proto_rows; row++) {
+        for (int col = 0; col < enc->proto_cols; col++) {
+            int shift = enc->proto_matrix[row][col];
             if (shift < 0) continue;
             
-            for (int k = 0; k < z; k++) {
-                int src_idx = i_block * z + k;
-                int dst_idx = p_block * z + ((k + shift) % z);
+            for (int i = 0; i < z; i++) {
+                int info_idx = col * z + i;
+                int parity_idx = row * z + ((i + shift) % z);
                 
-                parity[dst_idx] ^= info_bits[src_idx];
+                if (info_idx < enc->K) {
+                    codeword[enc->K + parity_idx] ^= codeword[info_idx];
+                }
             }
         }
     }
 }
+
