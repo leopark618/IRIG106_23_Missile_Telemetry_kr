@@ -8,9 +8,9 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
     if (!enc) return NULL;
     
     enc->rate = rate;
-    enc->N = IRIGFIX_LDPC_N;  /* ✅ LDPC_N → IRIGFIX_LDPC_N */
-    enc->K = 5461;  /* ✅ 기본값 설정 (switch 전에!) */
-    /* ✅ LDPC_K_RATE_2_3 → 직접 값 지정 */
+    enc->N = IRIGFIX_LDPC_N;  /*  LDPC_N → IRIGFIX_LDPC_N */
+    enc->K = 5461;  /*  기본값 설정 (switch 전에!) */
+    /*  LDPC_K_RATE_2_3 → 직접 값 지정 */
     switch (rate) {
         case LDPC_RATE_1_2: enc->K = 4096; break;  /* K = N/2 */
         case LDPC_RATE_2_3: enc->K = 5461; break;  /* K ≈ 2N/3 */
@@ -18,7 +18,7 @@ LDPC_Encoder* LDPC_Encoder_Create(LDPC_CodeRate rate)
     }
     
     enc->M = enc->N - enc->K;
-    enc->proto_rows = enc->M / IRIGFIX_LDPC_CIRCULANT_SIZE;  /* ✅ LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
+    enc->proto_rows = enc->M / IRIGFIX_LDPC_CIRCULANT_SIZE;  /*  LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
     enc->proto_cols = enc->N / IRIGFIX_LDPC_CIRCULANT_SIZE;
     
     enc->proto_matrix = malloc(enc->proto_rows * sizeof(int8_t*));
@@ -48,7 +48,7 @@ void LDPC_Encode(LDPC_Encoder *enc, const uint8_t *info, uint8_t *codeword)
     
     memcpy(codeword, info, enc->K);
     
-    int z = IRIGFIX_LDPC_CIRCULANT_SIZE;  /* ✅ LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
+    int z = IRIGFIX_LDPC_CIRCULANT_SIZE;  /*  LDPC_CIRCULANT_SIZE → IRIGFIX_LDPC_CIRCULANT_SIZE */
     
     for (int i = 0; i < enc->M; i++) {
         codeword[enc->K + i] = 0;
